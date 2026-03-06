@@ -541,6 +541,25 @@
       font-family: 'Oswald', sans-serif;
     }
 
+    .btn-delete {
+      width: 100%;
+      background: none;
+      color: #ff4444;
+      border: 1px solid rgba(255,68,68,0.25);
+      border-radius: 14px;
+      padding: 14px;
+      font-family: 'Oswald', sans-serif;
+      font-size: 14px;
+      cursor: pointer;
+      margin-bottom: 8px;
+      transition: background 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-delete:active { background: rgba(255,68,68,0.1); }
+
     /* toast */
     #toast {
       position: fixed;
@@ -760,6 +779,7 @@
     <div class="confirm-status" id="confirm-status">Aguardando entrada</div>
     <button class="btn-confirm-enter" id="confirm-btn" onclick="confirmEntry()">✓ CONFIRMAR ENTRADA</button>
     <button class="btn-undo-enter" id="undo-btn" onclick="undoEntry()" style="display:none">↩ Desfazer entrada</button>
+    <button class="btn-delete" onclick="deleteParticipant()">🗑 Remover da lista</button>
     <button class="btn-close-modal" onclick="closeModal('confirm-modal')">Fechar</button>
   </div>
 </div>
@@ -1027,6 +1047,21 @@ function undoEntry() {
   setChecked(selectedId, false);
   closeModal('confirm-modal');
   showToast('↩ Entrada desfeita', '');
+}
+
+function deleteParticipant() {
+  if (!selectedId) return;
+  if (!confirm("Remover "" + participants[selectedId].name + "" da lista?")) return;
+  if (usingFirebase) {
+    dbRef.child(selectedId).remove();
+  } else {
+    delete participants[selectedId];
+    saveLocal();
+    renderList();
+    updateCounters();
+  }
+  closeModal("confirm-modal");
+  showToast("🗑 Participante removido", "");
 }
 
 // ── ADD ──
