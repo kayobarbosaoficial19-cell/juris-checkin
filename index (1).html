@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0a0a0a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="JurisSP 3.0" />
+  <title>JurisSemPrudência 3.0 — Check-in</title>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --red: #c8102e;
+      --red-dark: #8b0a1f;
+      --red-glow: rgba(200, 16, 46, 0.35);
+      --gold: #f5c842;
+      --gold-dim: rgba(245, 200, 66, 0.15);
+      --white: #f0ece4;
+      --gray: #9a9a9a;
+      --gray-dim: #3a3a3a;
+      --bg: #0a0a0a;
+      --surface: #141414;
+      --surface2: #1e1e1e;
+      --border: rgba(255,255,255,0.07);
+      --green: #22c55e;
+      --green-dim: rgba(34, 197, 94, 0.12);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    html, body {
+      background: var(--bg);
+      color: var(--white);
+      font-family: 'Inter', sans-serif;
+      min-height: 100dvh;
+      overscroll-behavior: none;
+    }
+
+    /* ─── HEADER ─── */
+    #app-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px 0;
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    #logo-img {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2.5px solid var(--red);
+      box-shadow: 0 0 18px var(--red-glow), 0 0 6px rgba(200,16,46,0.5);
+      flex-shrink: 0;
+    }
+
+    #logo-placeholder {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: var(--surface2);
+      border: 2px dashed var(--gray-dim);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      cursor: pointer;
+      font-size: 9px;
+      color: var(--gray);
+      text-align: center;
+      line-height: 1.2;
+    }
+
+    .brand-text { flex: 1; min-width: 0; }
+    .event-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 26px;
+      letter-spacing: 1px;
+      line-height: 1;
+      color: var(--white);
+    }
+    .event-sub {
+      font-size: 10px;
+      color: var(--gray);
+      font-weight: 300;
+      letter-spacing: 0.5px;
+      margin-top: 2px;
+      font-family: 'Oswald', sans-serif;
+    }
+
+    /* counter */
+    .counter-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .counter-pill {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-family: 'Oswald', sans-serif;
+      font-size: 13px;
+      color: var(--gray);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .counter-pill .num {
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--white);
+    }
+    .counter-pill .num.green { color: var(--green); }
+    .counter-pill .num.red { color: var(--red); }
+
+    .progress-bar-wrap {
+      flex: 1;
+      min-width: 80px;
+      height: 6px;
+      background: var(--surface2);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--red), var(--gold));
+      border-radius: 99px;
+      transition: width 0.4s ease;
+    }
+
+    /* search */
+    .search-wrap {
+      position: relative;
+      margin-bottom: 10px;
+    }
+    .search-wrap svg {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--gray);
+      pointer-events: none;
+    }
+    #search-input {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 12px 12px 40px;
+      color: var(--white);
+      font-size: 15px;
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    #search-input:focus { border-color: var(--red); }
+    #search-input::placeholder { color: var(--gray); }
+
+    /* tabs */
+    .tab-row {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 8px 4px;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--gray);
+      font-family: 'Oswald', sans-serif;
+      font-size: 12px;
+      letter-spacing: 0.5px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .tab-btn.active {
+      color: var(--white);
+      border-bottom-color: var(--red);
+    }
+
+    /* ─── LIST ─── */
+    #list-container {
+      padding: 8px 12px 100px;
+    }
+
+    .section-label {
+      font-family: 'Oswald', sans-serif;
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      color: var(--gray);
+      margin: 14px 4px 6px;
+      text-transform: uppercase;
+    }
+
+    .person-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 14px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, transform 0.1s;
+      -webkit-user-select: none;
+      user-select: none;
+      position: relative;
+      overflow: hidden;
+    }
+    .person-card:active { transform: scale(0.985); }
+
+    .person-card.checked {
+      background: var(--green-dim);
+      border-color: rgba(34, 197, 94, 0.25);
+    }
+
+    .person-card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      background: transparent;
+      border-radius: 0 3px 3px 0;
+      transition: background 0.2s;
+    }
+    .person-card.checked::before { background: var(--green); }
+
+    .person-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--surface2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Oswald', sans-serif;
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--gray);
+      flex-shrink: 0;
+      transition: background 0.2s, color 0.2s;
+      border: 1.5px solid var(--border);
+    }
+    .person-card.checked .person-avatar {
+      background: rgba(34, 197, 94, 0.2);
+      color: var(--green);
+      border-color: rgba(34, 197, 94, 0.4);
+    }
+
+    .person-info { flex: 1; min-width: 0; }
+    .person-name {
+      font-family: 'Oswald', sans-serif;
+      font-weight: 500;
+      font-size: 16px;
+      letter-spacing: 0.3px;
+      color: var(--white);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: color 0.2s;
+    }
+    .person-card.checked .person-name {
+      color: var(--green);
+      text-decoration: line-through;
+      text-decoration-color: rgba(34,197,94,0.5);
+    }
+
+    .person-time {
+      font-size: 11px;
+      color: var(--gray);
+      margin-top: 2px;
+    }
+
+    .check-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid var(--gray-dim);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+    .person-card.checked .check-icon {
+      background: var(--green);
+      border-color: var(--green);
+    }
+    .check-icon svg { opacity: 0; transition: opacity 0.2s; }
+    .person-card.checked .check-icon svg { opacity: 1; }
+
+    /* empty state */
+    .empty-state {
+      text-align: center;
+      padding: 48px 24px;
+    }
+    .empty-state svg { color: var(--gray-dim); margin-bottom: 12px; }
+    .empty-state p { color: var(--gray); font-size: 14px; line-height: 1.6; }
+    .empty-state strong { color: var(--white); display: block; font-size: 16px; margin-bottom: 4px; font-family: 'Oswald', sans-serif; }
+
+    /* ─── FAB / BOTTOM BAR ─── */
+    #bottom-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      padding: 12px 16px;
+      padding-bottom: max(12px, env(safe-area-inset-bottom));
+      background: linear-gradient(to top, var(--bg) 70%, transparent);
+      display: flex;
+      gap: 10px;
+      z-index: 200;
+    }
+
+    .btn-primary {
+      flex: 1;
+      background: var(--red);
+      color: white;
+      border: none;
+      border-radius: 14px;
+      padding: 15px;
+      font-family: 'Oswald', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background 0.15s, transform 0.1s;
+      box-shadow: 0 4px 20px var(--red-glow);
+    }
+    .btn-primary:active { transform: scale(0.97); background: var(--red-dark); }
+
+    .btn-secondary {
+      background: var(--surface2);
+      color: var(--gray);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 15px 18px;
+      font-family: 'Oswald', sans-serif;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s;
+    }
+    .btn-secondary:active { background: var(--gray-dim); }
+
+    /* ─── MODALS ─── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(6px);
+      z-index: 300;
+      display: flex;
+      align-items: flex-end;
+      padding: 0;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s;
+    }
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal-sheet {
+      width: 100%;
+      background: var(--surface);
+      border-radius: 20px 20px 0 0;
+      padding: 20px 20px;
+      padding-bottom: max(20px, env(safe-area-inset-bottom));
+      border-top: 1px solid var(--border);
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+    }
+    .modal-overlay.open .modal-sheet { transform: translateY(0); }
+
+    .modal-handle {
+      width: 36px;
+      height: 4px;
+      background: var(--gray-dim);
+      border-radius: 99px;
+      margin: 0 auto 20px;
+    }
+
+    .modal-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 22px;
+      letter-spacing: 1px;
+      margin-bottom: 16px;
+    }
+
+    .input-field {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 13px 14px;
+      color: var(--white);
+      font-size: 15px;
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      margin-bottom: 10px;
+      transition: border-color 0.2s;
+    }
+    .input-field:focus { border-color: var(--red); }
+    .input-field::placeholder { color: var(--gray); }
+
+    textarea.input-field {
+      min-height: 140px;
+      resize: none;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .modal-hint {
+      font-size: 11px;
+      color: var(--gray);
+      margin-bottom: 14px;
+      line-height: 1.5;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 4px;
+    }
+    .modal-actions .btn-primary { padding: 14px; font-size: 14px; }
+    .modal-actions .btn-secondary { font-size: 13px; padding: 14px 16px; flex-shrink: 0; }
+
+    /* confirm modal */
+    #confirm-modal .modal-sheet { padding-bottom: max(28px, env(safe-area-inset-bottom)); }
+
+    .confirm-avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: var(--surface2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Oswald', sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--red);
+      margin: 0 auto 14px;
+      border: 2px solid var(--red);
+      box-shadow: 0 0 20px var(--red-glow);
+    }
+    .confirm-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 26px;
+      text-align: center;
+      letter-spacing: 1px;
+      line-height: 1.1;
+      margin-bottom: 6px;
+    }
+    .confirm-status {
+      text-align: center;
+      font-size: 12px;
+      color: var(--gray);
+      margin-bottom: 22px;
+    }
+    .confirm-status.already {
+      color: var(--green);
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .btn-confirm-enter {
+      width: 100%;
+      background: var(--red);
+      color: white;
+      border: none;
+      border-radius: 14px;
+      padding: 17px;
+      font-family: 'Oswald', sans-serif;
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      cursor: pointer;
+      margin-bottom: 8px;
+      transition: background 0.15s, transform 0.1s;
+      box-shadow: 0 4px 20px var(--red-glow);
+    }
+    .btn-confirm-enter:active { transform: scale(0.97); }
+
+    .btn-undo-enter {
+      width: 100%;
+      background: none;
+      color: var(--gray);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      font-family: 'Oswald', sans-serif;
+      font-size: 14px;
+      cursor: pointer;
+      margin-bottom: 8px;
+      transition: background 0.15s;
+    }
+    .btn-undo-enter:active { background: var(--gray-dim); }
+
+    .btn-close-modal {
+      width: 100%;
+      background: none;
+      color: var(--gray);
+      border: none;
+      padding: 12px;
+      font-size: 14px;
+      cursor: pointer;
+      font-family: 'Oswald', sans-serif;
+    }
+
+    /* toast */
+    #toast {
+      position: fixed;
+      bottom: 90px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      padding: 10px 22px;
+      font-family: 'Oswald', sans-serif;
+      font-size: 14px;
+      color: var(--white);
+      z-index: 500;
+      white-space: nowrap;
+      opacity: 0;
+      transition: all 0.25s;
+      pointer-events: none;
+    }
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    #toast.green { border-color: rgba(34,197,94,0.5); color: var(--green); }
+    #toast.red { border-color: rgba(200,16,46,0.5); color: #ff6b6b; }
+
+    /* firebase config modal */
+    #config-modal .modal-sheet { max-height: 90dvh; overflow-y: auto; }
+    .config-field-label {
+      font-size: 11px;
+      color: var(--gray);
+      font-family: 'Oswald', sans-serif;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .config-info {
+      background: var(--gold-dim);
+      border: 1px solid rgba(245,200,66,0.2);
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 11px;
+      color: var(--gold);
+      line-height: 1.6;
+      margin-bottom: 14px;
+    }
+
+    /* online indicator */
+    .sync-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--gray-dim);
+      flex-shrink: 0;
+      transition: background 0.3s;
+    }
+    .sync-dot.online { background: var(--green); animation: pulse-dot 2s infinite; }
+    .sync-dot.error { background: var(--red); }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* export btn */
+    .btn-export {
+      background: var(--surface2);
+      color: var(--gray);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 15px 16px;
+      font-family: 'Oswald', sans-serif;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+
+    /* highlight search */
+    mark {
+      background: rgba(200,16,46,0.3);
+      color: var(--white);
+      border-radius: 3px;
+      padding: 0 2px;
+    }
+
+    /* scrollbar */
+    ::-webkit-scrollbar { width: 3px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--gray-dim); border-radius: 99px; }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div id="app-header">
+  <div class="brand-row">
+    <img id="logo-img" src="" alt="Logo" style="display:none" />
+    <div id="logo-placeholder" onclick="document.getElementById('logo-upload').click()">
+      <span>LOGO</span>
+      <input type="file" id="logo-upload" accept="image/*" style="display:none" onchange="handleLogoUpload(event)" />
+    </div>
+    <div class="brand-text">
+      <div class="event-name">JurisSemPrudência 3.0</div>
+      <div class="event-sub">Atlética de Direito FEMA &nbsp;·&nbsp;
+        <span id="sync-label" style="display:inline-flex;align-items:center;gap:4px">
+          <span class="sync-dot" id="sync-dot"></span>
+          <span id="sync-text">sem conexão</span>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="counter-bar">
+    <div class="counter-pill">
+      <span class="num green" id="cnt-in">0</span> entraram
+    </div>
+    <div class="counter-pill">
+      <span class="num" id="cnt-total">0</span> total
+    </div>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
+    </div>
+    <div class="counter-pill">
+      <span class="num red" id="cnt-out">0</span> faltam
+    </div>
+  </div>
+
+  <div class="search-wrap">
+    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+    </svg>
+    <input id="search-input" type="search" inputmode="search" autocomplete="off" autocorrect="off"
+      spellcheck="false" placeholder="Buscar participante..." oninput="onSearch(this.value)" />
+  </div>
+
+  <div class="tab-row">
+    <button class="tab-btn active" onclick="setTab('all', this)">Todos</button>
+    <button class="tab-btn" onclick="setTab('pending', this)">Aguardando</button>
+    <button class="tab-btn" onclick="setTab('entered', this)">Entraram</button>
+  </div>
+</div>
+
+<!-- LIST -->
+<div id="list-container">
+  <div class="empty-state" id="empty-state">
+    <svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    <strong>Nenhum participante ainda</strong>
+    <p>Adicione participantes usando<br/>o botão abaixo ou importe uma lista.</p>
+  </div>
+</div>
+
+<!-- BOTTOM BAR -->
+<div id="bottom-bar">
+  <button class="btn-primary" onclick="openModal('add-modal')">
+    <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+    Adicionar
+  </button>
+  <button class="btn-export" onclick="openModal('import-modal')">
+    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Importar
+  </button>
+  <button class="btn-export" onclick="exportCSV()">
+    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+  </button>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- ── MODALS ── -->
+
+<!-- Add single person -->
+<div class="modal-overlay" id="add-modal" onclick="closeModalOutside(event,'add-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Novo Participante</div>
+    <input class="input-field" id="add-name" type="text" placeholder="Nome completo" autocomplete="off" />
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal('add-modal')">Cancelar</button>
+      <button class="btn-primary" onclick="addSinglePerson()">
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+        Adicionar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Import list -->
+<div class="modal-overlay" id="import-modal" onclick="closeModalOutside(event,'import-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Importar Lista</div>
+    <p class="modal-hint">Cole os nomes abaixo — um por linha. Os nomes existentes serão mantidos.</p>
+    <textarea class="input-field" id="import-text" placeholder="Ana Lima&#10;Bruno Souza&#10;Carla Mendes&#10;..."></textarea>
+    <label class="config-field-label" style="margin-bottom:6px;display:block">Ou envie um arquivo .txt / .csv:</label>
+    <input type="file" id="import-file" accept=".txt,.csv" style="display:none" onchange="handleFileImport(event)" />
+    <button class="btn-secondary" style="width:100%;justify-content:center;margin-bottom:10px" onclick="document.getElementById('import-file').click()">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Escolher arquivo
+    </button>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal('import-modal')">Cancelar</button>
+      <button class="btn-primary" onclick="importList()">Importar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm entry -->
+<div class="modal-overlay" id="confirm-modal" onclick="closeModalOutside(event,'confirm-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="confirm-avatar" id="confirm-avatar">??</div>
+    <div class="confirm-name" id="confirm-name">Nome</div>
+    <div class="confirm-status" id="confirm-status">Aguardando entrada</div>
+    <button class="btn-confirm-enter" id="confirm-btn" onclick="confirmEntry()">✓ CONFIRMAR ENTRADA</button>
+    <button class="btn-undo-enter" id="undo-btn" onclick="undoEntry()" style="display:none">↩ Desfazer entrada</button>
+    <button class="btn-close-modal" onclick="closeModal('confirm-modal')">Fechar</button>
+  </div>
+</div>
+
+<!-- Firebase config -->
+<div class="modal-overlay" id="config-modal" onclick="closeModalOutside(event,'config-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🔥 Configurar Firebase</div>
+    <div class="config-info">
+      Para sincronização em tempo real entre celulares, é necessário um projeto Firebase gratuito.<br/><br/>
+      1. Acesse <strong>console.firebase.google.com</strong><br/>
+      2. Crie um projeto → Realtime Database<br/>
+      3. Cole as configurações abaixo
+    </div>
+    <div class="config-field-label">API Key</div>
+    <input class="input-field" id="cfg-apiKey" placeholder="AIza..." />
+    <div class="config-field-label">Auth Domain</div>
+    <input class="input-field" id="cfg-authDomain" placeholder="seu-projeto.firebaseapp.com" />
+    <div class="config-field-label">Database URL</div>
+    <input class="input-field" id="cfg-databaseURL" placeholder="https://seu-projeto-default-rtdb.firebaseio.com" />
+    <div class="config-field-label">Project ID</div>
+    <input class="input-field" id="cfg-projectId" placeholder="seu-projeto" />
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal('config-modal')">Cancelar</button>
+      <button class="btn-primary" onclick="saveFirebaseConfig()">Conectar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STATE ──
+let participants = {};    // { id: { name, checked, checkedAt } }
+let currentTab = 'all';
+let searchQuery = '';
+let selectedId = null;
+let db = null;
+let dbRef = null;
+let usingFirebase = false;
+
+// ── FIREBASE INIT ──
+function initFirebase(cfg) {
+  try {
+    if (firebase.apps.length > 0) {
+      firebase.apps.forEach(app => app.delete());
+    }
+    firebase.initializeApp(cfg);
+    db = firebase.database();
+    dbRef = db.ref('juris3/participants');
+
+    dbRef.on('value', snap => {
+      const data = snap.val();
+      participants = data || {};
+      renderList();
+      updateCounters();
+    });
+
+    db.ref('.info/connected').on('value', snap => {
+      const online = snap.val();
+      document.getElementById('sync-dot').className = 'sync-dot ' + (online ? 'online' : 'error');
+      document.getElementById('sync-text').textContent = online ? 'sincronizado' : 'offline';
+    });
+
+    usingFirebase = true;
+    localStorage.setItem('fbConfig', JSON.stringify(cfg));
+    closeModal('config-modal');
+    showToast('🔥 Firebase conectado!', 'green');
+  } catch(e) {
+    showToast('Erro ao conectar: ' + e.message, 'red');
+  }
+}
+
+function saveFirebaseConfig() {
+  const cfg = {
+    apiKey: document.getElementById('cfg-apiKey').value.trim(),
+    authDomain: document.getElementById('cfg-authDomain').value.trim(),
+    databaseURL: document.getElementById('cfg-databaseURL').value.trim(),
+    projectId: document.getElementById('cfg-projectId').value.trim(),
+  };
+  if (!cfg.apiKey || !cfg.databaseURL) {
+    showToast('Preencha API Key e Database URL', 'red');
+    return;
+  }
+  initFirebase(cfg);
+}
+
+// Try restore firebase config
+(function(){
+  const saved = localStorage.getItem('fbConfig');
+  if (saved) {
+    try { initFirebase(JSON.parse(saved)); } catch(e) {}
+  }
+})();
+
+// ── LOCAL STORAGE FALLBACK ──
+function loadLocal() {
+  const d = localStorage.getItem('juris3_participants');
+  if (d) { participants = JSON.parse(d); renderList(); updateCounters(); }
+}
+function saveLocal() {
+  if (!usingFirebase) localStorage.setItem('juris3_participants', JSON.stringify(participants));
+}
+if (!usingFirebase) loadLocal();
+
+// ── CRUD ──
+function genId() {
+  return 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
+}
+
+function addParticipant(name) {
+  name = name.trim();
+  if (!name) return false;
+  // check duplicate
+  const exists = Object.values(participants).some(p => p.name.toLowerCase() === name.toLowerCase());
+  if (exists) { showToast('Participante já existe', 'red'); return false; }
+
+  const id = genId();
+  const person = { name, checked: false, checkedAt: null };
+
+  if (usingFirebase) {
+    dbRef.child(id).set(person);
+  } else {
+    participants[id] = person;
+    saveLocal();
+    renderList();
+    updateCounters();
+  }
+  return true;
+}
+
+function setChecked(id, checked) {
+  const checkedAt = checked ? new Date().toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' }) : null;
+  if (usingFirebase) {
+    dbRef.child(id).update({ checked, checkedAt });
+  } else {
+    participants[id].checked = checked;
+    participants[id].checkedAt = checkedAt;
+    saveLocal();
+    renderList();
+    updateCounters();
+  }
+}
+
+// ── RENDER ──
+function getInitials(name) {
+  return name.split(' ').filter(Boolean).slice(0,2).map(w => w[0].toUpperCase()).join('');
+}
+
+function highlight(text, query) {
+  if (!query) return text;
+  const re = new RegExp('(' + query.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')', 'gi');
+  return text.replace(re, '<mark>$1</mark>');
+}
+
+function renderList() {
+  const container = document.getElementById('list-container');
+  const q = searchQuery.toLowerCase();
+  const empty = document.getElementById('empty-state');
+
+  let ids = Object.keys(participants);
+
+  // filter by tab
+  if (currentTab === 'pending') ids = ids.filter(id => !participants[id].checked);
+  if (currentTab === 'entered') ids = ids.filter(id => participants[id].checked);
+
+  // filter by search
+  if (q) ids = ids.filter(id => participants[id].name.toLowerCase().includes(q));
+
+  // sort: unchecked first, then alpha
+  ids.sort((a,b) => {
+    const pa = participants[a], pb = participants[b];
+    if (pa.checked !== pb.checked) return pa.checked ? 1 : -1;
+    return pa.name.localeCompare(pb.name, 'pt-BR');
+  });
+
+  // remove old cards
+  container.querySelectorAll('.person-card, .section-label').forEach(el => el.remove());
+
+  if (ids.length === 0) {
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  let lastChecked = null;
+
+  ids.forEach(id => {
+    const p = participants[id];
+
+    // section label
+    if (lastChecked !== p.checked) {
+      lastChecked = p.checked;
+      if (currentTab === 'all') {
+        const lbl = document.createElement('div');
+        lbl.className = 'section-label';
+        lbl.textContent = p.checked ? '✓ Entraram' : 'Aguardando';
+        container.appendChild(lbl);
+      }
+    }
+
+    const card = document.createElement('div');
+    card.className = 'person-card' + (p.checked ? ' checked' : '');
+    card.dataset.id = id;
+    card.innerHTML = `
+      <div class="person-avatar">${getInitials(p.name)}</div>
+      <div class="person-info">
+        <div class="person-name">${highlight(p.name, q)}</div>
+        ${p.checked ? `<div class="person-time">Entrou às ${p.checkedAt || '--'}</div>` : ''}
+      </div>
+      <div class="check-icon">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+    `;
+    card.addEventListener('click', () => openConfirmModal(id));
+    container.appendChild(card);
+  });
+}
+
+function updateCounters() {
+  const total = Object.keys(participants).length;
+  const entered = Object.values(participants).filter(p => p.checked).length;
+  const remaining = total - entered;
+  document.getElementById('cnt-total').textContent = total;
+  document.getElementById('cnt-in').textContent = entered;
+  document.getElementById('cnt-out').textContent = remaining;
+  const pct = total > 0 ? (entered / total * 100) : 0;
+  document.getElementById('progress-fill').style.width = pct + '%';
+}
+
+// ── CONFIRM MODAL ──
+function openConfirmModal(id) {
+  selectedId = id;
+  const p = participants[id];
+  document.getElementById('confirm-avatar').textContent = getInitials(p.name);
+  document.getElementById('confirm-name').textContent = p.name;
+
+  const statusEl = document.getElementById('confirm-status');
+  const confirmBtn = document.getElementById('confirm-btn');
+  const undoBtn = document.getElementById('undo-btn');
+
+  if (p.checked) {
+    statusEl.textContent = '✓ Entrada já confirmada às ' + (p.checkedAt || '--');
+    statusEl.className = 'confirm-status already';
+    confirmBtn.style.display = 'none';
+    undoBtn.style.display = 'block';
+  } else {
+    statusEl.textContent = 'Aguardando entrada';
+    statusEl.className = 'confirm-status';
+    confirmBtn.style.display = 'block';
+    undoBtn.style.display = 'none';
+  }
+
+  openModal('confirm-modal');
+}
+
+function confirmEntry() {
+  if (!selectedId) return;
+  setChecked(selectedId, true);
+  closeModal('confirm-modal');
+  showToast('✓ Entrada confirmada!', 'green');
+}
+
+function undoEntry() {
+  if (!selectedId) return;
+  setChecked(selectedId, false);
+  closeModal('confirm-modal');
+  showToast('↩ Entrada desfeita', '');
+}
+
+// ── ADD ──
+function addSinglePerson() {
+  const input = document.getElementById('add-name');
+  const name = input.value.trim();
+  if (!name) { showToast('Digite um nome', 'red'); return; }
+  if (addParticipant(name)) {
+    input.value = '';
+    closeModal('add-modal');
+    showToast('Participante adicionado!', 'green');
+  }
+}
+
+document.getElementById('add-name').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addSinglePerson();
+});
+
+// ── IMPORT ──
+function importList() {
+  const text = document.getElementById('import-text').value;
+  processImportText(text);
+}
+
+function processImportText(text) {
+  const names = text.split('\n').map(l => l.trim()).filter(Boolean);
+  if (names.length === 0) { showToast('Nenhum nome encontrado', 'red'); return; }
+
+  let added = 0;
+  names.forEach(name => { if (addParticipant(name)) added++; });
+
+  document.getElementById('import-text').value = '';
+  closeModal('import-modal');
+  showToast(`${added} participante(s) importado(s)!`, 'green');
+}
+
+function handleFileImport(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    document.getElementById('import-text').value = ev.target.result;
+  };
+  reader.readAsText(file, 'UTF-8');
+  e.target.value = '';
+}
+
+// ── EXPORT ──
+function exportCSV() {
+  const rows = [['Nome', 'Status', 'Hora de Entrada']];
+  Object.values(participants).sort((a,b) => a.name.localeCompare(b.name,'pt-BR')).forEach(p => {
+    rows.push([p.name, p.checked ? 'Entrou' : 'Aguardando', p.checkedAt || '']);
+  });
+  const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'juris3_checkin.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Lista exportada!', 'green');
+}
+
+// ── SEARCH / TABS ──
+function onSearch(val) {
+  searchQuery = val.trim();
+  renderList();
+}
+
+function setTab(tab, btn) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderList();
+}
+
+// ── MODALS ──
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  if (id === 'add-modal') setTimeout(() => document.getElementById('add-name').focus(), 300);
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+function closeModalOutside(event, id) {
+  if (event.target === event.currentTarget) closeModal(id);
+}
+
+// ── TOAST ──
+let toastTimer;
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show ' + (type || '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.className = ''; }, 2800);
+}
+
+// ── LOGO ──
+function handleLogoUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = document.getElementById('logo-img');
+    const ph = document.getElementById('logo-placeholder');
+    img.src = ev.target.result;
+    img.style.display = 'block';
+    ph.style.display = 'none';
+    localStorage.setItem('juris3_logo', ev.target.result);
+  };
+  reader.readAsDataURL(file);
+}
+
+// restore logo
+(function(){
+  const logo = localStorage.getItem('juris3_logo');
+  if (logo) {
+    const img = document.getElementById('logo-img');
+    const ph = document.getElementById('logo-placeholder');
+    img.src = logo;
+    img.style.display = 'block';
+    ph.style.display = 'none';
+  }
+})();
+
+// ── SET LOGO FROM UPLOAD ──
+// Pre-load the event logo if available
+(function trySetDefaultLogo() {
+  // We'll set the logo after checking if the image file is available
+  const img = new Image();
+  img.onload = () => {
+    const el = document.getElementById('logo-img');
+    const ph = document.getElementById('logo-placeholder');
+    el.src = img.src;
+    el.style.display = 'block';
+    ph.style.display = 'none';
+  };
+  img.src = 'logo.png';
+})();
+
+// ── Firebase config button in sync label ──
+document.getElementById('sync-label').addEventListener('click', () => {
+  openModal('config-modal');
+});
+
+// If not firebase, load local
+if (!usingFirebase) {
+  renderList();
+  updateCounters();
+}
+</script>
+</body>
+</html>
